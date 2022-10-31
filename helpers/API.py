@@ -32,3 +32,25 @@ class API:
                 response.raw.decode_content = True
                 shutil.copyfileobj(response.raw, f)
         return True
+
+    def GetUGVImageDetails(self, mission):
+        url = self.url + "/api/UGVImage/GetUGVImageDetails?mission=" + str(mission)
+        payload = {}
+        headers = {
+            'Authorization': 'Bearer ' + self.jwt
+        }
+        response = requests.request("GET", url, headers=headers, data=payload)
+        return response.json()
+
+    def DownloadUGVImage(self, ImageName):
+        url = self.url + "/api/UGVImage/Download?ImageName=" + str(ImageName)
+        payload = {}
+        headers = {
+            'Authorization': 'Bearer ' + self.jwt
+        }
+        response = requests.request("POST", url, headers=headers, data=payload, stream=True)
+        if response.status_code == 200:
+            with open("../downloads/" + ImageName, 'wb') as f:
+                response.raw.decode_content = True
+                shutil.copyfileobj(response.raw, f)
+        return True
