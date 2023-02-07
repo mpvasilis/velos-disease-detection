@@ -5,39 +5,55 @@ import inline as inline
 import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
+import json
+from PIL import Image
+
 
 
 # https://www.youtube.com/watch?v=oXlwWbU8l2o
 def preprocessing():
     images_path= os.listdir('./images')
+    annotation_path = './annotations'
     for img in images_path:
-        image = cv2.imread('./images/'+img, 1)
+        image_name = img.split('.')[0]
+        f = open(annotation_path + '/'+image_name+'.json')
+        json_data = json.load(f)
+
+        image = cv2.imread('./images/'+img)
 
         #Comvert BGR color from cv2 to RGB
-        image = cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
+        #image = cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
 
-        imag2 = get_Sobel_x(image)
+
+        imag2 = get_grayscale(image)
 
         # Show image
-        cv2.imshow('Image',imag2)
-        cv2.waitKey(0)
+        img2 = cv2.cvtColor(imag2, cv2.COLOR_BGR2RGB)
+        im_pil = Image.fromarray(img2)
+        im_pil.show()
 
+        # cv2.imshow('Image',imag2)
+        # cv2.waitKey(0)
 
         exit()
 
-
-        #Show image
-        # cv2.imshow(image, img)
-        # k = cv2.waitKey(0)
-        # if k == 27 or k == ord('q'):
-        #     cv2.destroyAllWindows()
-
-        # fig, ax = plt.subplots(figsize=(10, 10))
-        # ax.imshow(image)
-        # plt.show()
-
-
         cv2.imwrite('new.jpg', imag2)
+
+
+#--------Annotation
+def get_Annotation(image,json_data):
+    imageRectangle = image.copy()
+    for a in range(len(json_data['annotations'])):
+        coordinates = json_data['annotations'][a]['bbox']
+        start_point = (round(coordinates[0]), round(coordinates[1]))
+        end_point = (round(coordinates[2]), round(coordinates[3]))
+        cv2.rectangle(imageRectangle, start_point, end_point, (0, 0, 255), thickness=3)
+
+    img2 = cv2.cvtColor(imageRectangle, cv2.COLOR_BGR2RGB)
+    im_pil = Image.fromarray(img2)
+    im_pil.show()
+
+    return imageRectangle
 
 
 
