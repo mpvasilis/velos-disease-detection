@@ -33,7 +33,7 @@ class Train:
         }
         response = requests.request("POST", url, headers=headers, data=payload, stream=True)
         if response.status_code == 200:
-            with open("./downloads/train/" + ImageName, 'wb') as f:
+            with open("./downloads/train/data/" + ImageName, 'wb') as f:
                 response.raw.decode_content = True
                 shutil.copyfileobj(response.raw, f)
         return True
@@ -41,11 +41,11 @@ class Train:
     def DownloadUAVImages(self):
         images = []
         if self.responseUAV is not None:
-            if not os.path.exists("./downloads/train/"):
-                os.makedirs("./downloads/train/")
+            if not os.path.exists("./downloads/train/data/"):
+                os.makedirs("./downloads/train/data/")
             print(self.responseUAV)
             for image in self.responseUAV:
-                image_path = "./downloads/train/"+image['filename']
+                image_path = "./downloads/train/data/"+image['filename']
                 if not os.path.exists(image_path):
                     self.DownloadUAVImage(image['filename'])
                 if os.path.exists(image_path):
@@ -58,11 +58,11 @@ class Train:
     def DownloadUGVImages(self):
         images = []
         if self.responseUGV is not None:
-            if not os.path.exists("./downloads/train/"):
-                os.makedirs("./downloads/train/")
+            if not os.path.exists("./downloads/train/data/"):
+                os.makedirs("./downloads/train/data/")
             print(self.responseUGV)
             for image in self.responseUGV:
-                image_path = "./downloads/train/"+image['filename']
+                image_path = "./downloads/train/data/"+image['filename']
                 if not os.path.exists(image_path):
                     self.DownloadUGVImage(image['filename'])
                 if os.path.exists(image_path):
@@ -92,7 +92,7 @@ class Train:
         }
         response = requests.request("POST", url, headers=headers, data=payload, stream=True)
         if response.status_code == 200:
-            with open("./downloads/train/" + ImageName, 'wb') as f:
+            with open("./downloads/train/data/" + ImageName, 'wb') as f:
                 response.raw.decode_content = True
                 shutil.copyfileobj(response.raw, f)
         return True
