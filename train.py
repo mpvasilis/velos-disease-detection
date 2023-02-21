@@ -9,3 +9,4 @@ dataset = fo.Dataset.from_dir(
     name=name,
 )
 session = fo.launch_app(dataset)
+session.wait()
