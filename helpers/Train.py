@@ -87,6 +87,26 @@ class Train:
             print(self.responseUGV)
             for image in self.responseUGV:
                 image_path = "./downloads/train/data/" + image['filename']
+                print(image['annotation'])
+                im = Image.open(image_path)
+                image_width, image_height = im.size
+                f = open("./downloads/train/data/" + image['filename'][:len(image['filename']) - 3] + "txt", "w")
+                for annotation in json.loads(image['annotation']):
+                    # print(annotation)
+                    # print(annotation['mark']['x'])
+                    # print(annotation['mark']['y'])
+                    # print(annotation['mark']['width'])
+                    # print(annotation['mark']['height'])
+                    yolo = coco_to_yolo(float(annotation['mark']['x']), float(annotation['mark']['y']),
+                                        float(annotation['mark']['width']), float(annotation['mark']['height']),
+                                        image_width, image_height)  # <[98 345 420 462] (322x117) | Image: (?x?)>
+
+                    if 'comment' in annotation:
+                        print(classes[annotation['comment']], yolo)
+                        f.write(classes[annotation['comment']] + " " + " ".join(yolo))
+                    else:
+                        print("Annotation", annotation['id'], "of image", image['filename'], "does not have class")
+                f.close()
                 if not os.path.exists(image_path):
                     self.DownloadUGVImage(image['filename'])
                 if os.path.exists(image_path):
