@@ -38,7 +38,7 @@ class Train:
         }
         response = requests.request("POST", url, headers=headers, data=payload, stream=True)
         if response.status_code == 200:
-            with open("./downloads/train/data/" + ImageName, 'wb') as f:
+            with open("./downloads/train/images/" + ImageName, 'wb') as f:
                 response.raw.decode_content = True
                 shutil.copyfileobj(response.raw, f)
         return True
@@ -46,15 +46,17 @@ class Train:
     def DownloadUAVImages(self):
         images = []
         if self.responseUAV is not None:
-            if not os.path.exists("./downloads/train/data/"):
-                os.makedirs("./downloads/train/data/")
+            if not os.path.exists("./downloads/train/images/"):
+                os.makedirs("./downloads/train/images/")
+            if not os.path.exists("./downloads/train/labels/"):
+                os.makedirs("./downloads/train/labels/")
             print(self.responseUAV)
             for image in self.responseUAV:
-                image_path = "./downloads/train/data/" + image['filename']
+                image_path = "./downloads/train/images/" + image['filename']
                 print(image['annotation'])
                 im = Image.open(image_path)
                 image_width, image_height = im.size
-                f = open("./downloads/train/data/"+image['filename'][:len(image['filename']) - 3] + "txt", "w")
+                f = open("./downloads/train/labels/"+image['filename'][:len(image['filename']) - 3] + "txt", "w")
                 for annotation in json.loads(image['annotation']):
                     # print(annotation)
                     # print(annotation['mark']['x'])
@@ -82,15 +84,17 @@ class Train:
     def DownloadUGVImages(self):
         images = []
         if self.responseUGV is not None:
-            if not os.path.exists("./downloads/train/data/"):
-                os.makedirs("./downloads/train/data/")
+            if not os.path.exists("./downloads/train/images/"):
+                os.makedirs("./downloads/train/images/")
+            if not os.path.exists("./downloads/train/labels/"):
+                os.makedirs("./downloads/train/labels/")
             print(self.responseUGV)
             for image in self.responseUGV:
-                image_path = "./downloads/train/data/" + image['filename']
+                image_path = "./downloads/train/images/" + image['filename']
                 print(image['annotation'])
                 im = Image.open(image_path)
                 image_width, image_height = im.size
-                f = open("./downloads/train/data/" + image['filename'][:len(image['filename']) - 3] + "txt", "w")
+                f = open("./downloads/train/labels/" + image['filename'][:len(image['filename']) - 3] + "txt", "w")
                 for annotation in json.loads(image['annotation']):
                     # print(annotation)
                     # print(annotation['mark']['x'])
@@ -133,7 +137,7 @@ class Train:
         }
         response = requests.request("POST", url, headers=headers, data=payload, stream=True)
         if response.status_code == 200:
-            with open("./downloads/train/data/" + ImageName, 'wb') as f:
+            with open("./downloads/train/images/" + ImageName, 'wb') as f:
                 response.raw.decode_content = True
                 shutil.copyfileobj(response.raw, f)
         return True
