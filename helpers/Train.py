@@ -1,9 +1,12 @@
 import os
 import shutil
 import json
-
+from PIL import Image
 import requests
 import logging
+
+from helpers.Annotations import coco_to_yolo, classes
+
 
 class Train:
 
@@ -12,8 +15,10 @@ class Train:
         self.jwt = jwt
         self.responseUAV = None
         self.responseUGV = None
+        self.classes = []
+        self.annotations = []
         log = logging.getLogger("VELOS")
-        log.debug("API initialised to",self.url)
+        log.debug("API initialised to", self.url)
 
     def GetUAVImageDetails(self):
         url = self.url + "/api/UAVImage/GetUAVImageDetails"
@@ -45,7 +50,27 @@ class Train:
                 os.makedirs("./downloads/train/data/")
             print(self.responseUAV)
             for image in self.responseUAV:
-                image_path = "./downloads/train/data/"+image['filename']
+                image_path = "./downloads/train/data/" + image['filename']
+                print(image['annotation'])
+                im = Image.open(image_path)
+                image_width, image_height = im.size
+                f = open("./downloads/train/data/"+image['filename'][:len(image['filename']) - 3] + "txt", "w")
+                for annotation in json.loads(image['annotation']):
+                    # print(annotation)
+                    # print(annotation['mark']['x'])
+                    # print(annotation['mark']['y'])
+                    # print(annotation['mark']['width'])
+                    # print(annotation['mark']['height'])
+                    yolo = coco_to_yolo(float(annotation['mark']['x']), float(annotation['mark']['y']),
+                                        float(annotation['mark']['width']), float(annotation['mark']['height']),
+                                        image_width, image_height)  # <[98 345 420 462] (322x117) | Image: (?x?)>
+
+                    if 'comment' in annotation:
+                        print(classes[annotation['comment']], yolo)
+                        f.write(classes[annotation['comment']]+" "+" ".join(yolo))
+                    else:
+                        print("Annotation", annotation['id'], "of image", image['filename'], "does not have class")
+                f.close()
                 if not os.path.exists(image_path):
                     self.DownloadUAVImage(image['filename'])
                 if os.path.exists(image_path):
@@ -54,7 +79,6 @@ class Train:
             raise Exception("[DownloadUAVImages] Empty response.")
         return images
 
-
     def DownloadUGVImages(self):
         images = []
         if self.responseUGV is not None:
@@ -62,7 +86,7 @@ class Train:
                 os.makedirs("./downloads/train/data/")
             print(self.responseUGV)
             for image in self.responseUGV:
-                image_path = "./downloads/train/data/"+image['filename']
+                image_path = "./downloads/train/data/" + image['filename']
                 if not os.path.exists(image_path):
                     self.DownloadUGVImage(image['filename'])
                 if os.path.exists(image_path):
@@ -70,9 +94,6 @@ class Train:
         else:
             raise Exception("[DownloadUGVImages] Empty response.")
         return images
-
-
-
 
     def GetUGVImageDetails(self):
         url = self.url + "/api/UGVImage/GetUGVImageDetails"
