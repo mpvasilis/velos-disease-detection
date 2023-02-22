@@ -5,4 +5,4 @@ val: ./images/
 nc: 2
 
 # class names
-names: ["Skoriasi", "Tetranychos"]
+names: ["Skoriasi", "Tetranychos", "Prasino Skouliki"]
