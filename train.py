@@ -1,7 +1,7 @@
 import fiftyone as fo
 name = "velos-train-dataset"
-dataset_dir = "./downloads/train"
-dataset_type = fo.types.COCODetectionDataset
+dataset_dir = "./downloads/train/"
+dataset_type = fo.types.YOLOv5Dataset
 
 dataset = fo.Dataset.from_dir(
     dataset_dir=dataset_dir,
