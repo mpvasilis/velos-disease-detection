@@ -69,7 +69,7 @@ class Train:
 
                     if 'comment' in annotation:
                         print(classes[annotation['comment']], yolo)
-                        f.write(classes[annotation['comment']]+" "+" ".join(yolo))
+                        f.write(classes[annotation['comment']] + " " + " ".join(yolo)+"\n")
                     else:
                         print("Annotation", annotation['id'], "of image", image['filename'], "does not have class")
                 f.close()
@@ -107,7 +107,7 @@ class Train:
 
                     if 'comment' in annotation:
                         print(classes[annotation['comment']], yolo)
-                        f.write(classes[annotation['comment']] + " " + " ".join(yolo))
+                        f.write(classes[annotation['comment']] + " " + " ".join(yolo)+"\n")
                     else:
                         print("Annotation", annotation['id'], "of image", image['filename'], "does not have class")
                 f.close()
@@ -141,3 +141,8 @@ class Train:
                 response.raw.decode_content = True
                 shutil.copyfileobj(response.raw, f)
         return True
+
+    def split_train_val(self):
+        pass
+        #from utils.datasets import *;
+        #autosplit('./downloads/train/')
