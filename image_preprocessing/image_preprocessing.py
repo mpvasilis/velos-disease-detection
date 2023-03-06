@@ -12,14 +12,22 @@ from PIL import Image
 
 # https://www.youtube.com/watch?v=oXlwWbU8l2o
 def preprocessing():
-    images_path= os.listdir('./images')
-    annotation_path = './annotations'
+    images_path= os.listdir("../downloads/train/images")
+    annotation_path = '../downloads/train/labels'
     for img in images_path:
         image_name = img.split('.')[0]
-        f = open(annotation_path + '/'+image_name+'.json')
-        json_data = json.load(f)
+        f = open(annotation_path + '/'+image_name+'.txt')
+        anno_data = f.readlines()
+        f.close()
 
-        image = cv2.imread('./images/'+img)
+
+
+        image = cv2.imread('../downloads/train/images/'+img)
+
+
+        get_Annotation(image, anno_data)
+
+        exit()
 
         #Comvert BGR color from cv2 to RGB
         #image = cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
@@ -41,13 +49,27 @@ def preprocessing():
 
 
 #--------Annotation
-def get_Annotation(image,json_data):
+def get_Annotation(image,anno_data):
     imageRectangle = image.copy()
-    for a in range(len(json_data['annotations'])):
-        coordinates = json_data['annotations'][a]['bbox']
-        start_point = (round(coordinates[0]), round(coordinates[1]))
-        end_point = (round(coordinates[2]), round(coordinates[3]))
-        cv2.rectangle(imageRectangle, start_point, end_point, (0, 0, 255), thickness=3)
+
+    dh,dw,_ = image.shape
+
+    for a in anno_data:
+        _, x, y, w, h = map(float, a.split(' '))
+        l = int((x - w / 2) * dw)
+        r = int((x + w / 2) * dw)
+        t = int((y - h / 2) * dh)
+        b = int((y + h / 2) * dh)
+        if l < 0:
+            l = 0
+        if r > dw - 1:
+            r = dw - 1
+        if t < 0:
+            t = 0
+        if b > dh - 1:
+            b = dh - 1
+        cv2.rectangle(imageRectangle, (l, t), (r, b), (0, 0, 255), 3)
+
 
     img2 = cv2.cvtColor(imageRectangle, cv2.COLOR_BGR2RGB)
     im_pil = Image.fromarray(img2)
