@@ -12,92 +12,258 @@ from PIL import Image
 
 # https://www.youtube.com/watch?v=oXlwWbU8l2o
 def preprocessing():
-    images_path= os.listdir('./images')
-    annotation_path = './annotations'
+    images_path= os.listdir("../downloads/train/images")
+    annotation_path = '../downloads/train/labels'
     for img in images_path:
         image_name = img.split('.')[0]
-        f = open(annotation_path + '/'+image_name+'.json')
-        json_data = json.load(f)
+        f = open(annotation_path + '/'+image_name+'.txt')
+        annotations = f.readlines()
+        f.close()
 
-        image = cv2.imread('./images/'+img)
-
-        #Comvert BGR color from cv2 to RGB
-        #image = cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
-
-
-        imag2 = get_grayscale(image)
+        image = cv2.imread('../downloads/train/images/'+img)
+        # Comvert BGR color from cv2 to RGB
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image = get_Annotation(image, annotations)
 
         # Show image
-        img2 = cv2.cvtColor(imag2, cv2.COLOR_BGR2RGB)
-        im_pil = Image.fromarray(img2)
+        im_pil = Image.fromarray(image)
         im_pil.show()
 
-        # cv2.imshow('Image',imag2)
-        # cv2.waitKey(0)
+
+        image = cv2.imread('../downloads/train/images/' + img)
+        # Comvert BGR color from cv2 to RGB
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image_pre,new_annotations = get_canny(image,annotations)    #Give the image preprocessing technique ------------------------------------------------
+
+
+        image_pre = get_Annotation(image_pre, new_annotations)
+        # Show image
+        im_pil = Image.fromarray(image_pre)
+        im_pil.show()
+
+
+
+        new_image_folder_path = 'new_data/get_Laplacian'   #set name of folder
+        if not os.path.exists(new_image_folder_path):
+            os.mkdir(new_image_folder_path)
+        if not os.path.exists(new_image_folder_path+'/images'):
+            os.mkdir(new_image_folder_path+'/images')
+        if not os.path.exists(new_image_folder_path+'/labels'):
+            os.mkdir(new_image_folder_path+'/labels')
+
+        cv2.imwrite(new_image_folder_path+'/images/'+image_name+'.jpg', image_pre)
 
         exit()
 
-        cv2.imwrite('new.jpg', imag2)
+        # # Show image
+        # img2 = cv2.cvtColor(imag2, cv2.COLOR_BGR2RGB)
+        # im_pil = Image.fromarray(img2)
+        # im_pil.show()
+
+
+import cv2
+import numpy as np
+
 
 
 #--------Annotation
-def get_Annotation(image,json_data):
-    imageRectangle = image.copy()
-    for a in range(len(json_data['annotations'])):
-        coordinates = json_data['annotations'][a]['bbox']
-        start_point = (round(coordinates[0]), round(coordinates[1]))
-        end_point = (round(coordinates[2]), round(coordinates[3]))
-        cv2.rectangle(imageRectangle, start_point, end_point, (0, 0, 255), thickness=3)
+def get_Annotation(image,annotations):
+    # convert annotations to pixel coordinates
+    img_h, img_w = image.shape[:2]
+    pixel_annotations = []
+    for annotation in annotations:
+        try:
+            class_id, x, y, width, height = annotation.split()
+        except:
+            class_id, x, y, width, height = annotation[:]
 
-    img2 = cv2.cvtColor(imageRectangle, cv2.COLOR_BGR2RGB)
-    im_pil = Image.fromarray(img2)
-    im_pil.show()
+        x = int(float(x) * img_w)
+        y = int(float(y) * img_h)
+        width = int(float(width) * img_w)
+        height = int(float(height) * img_h)
+        pixel_annotations.append((class_id, x, y, width, height))
 
-    return imageRectangle
-
+    # draw annotations on image
+    for annotation in pixel_annotations:
+        class_id, x, y, width, height = annotation
+        x1 = int(x - width / 2)
+        y1 = int(y - height / 2)
+        x2 = int(x + width / 2)
+        y2 = int(y + height / 2)
+        cv2.rectangle(image, (x1, y1), (x2, y2), (255, 0, 0), 5)
+    return image
 
 
 #--------Edge detection
-def get_Laplacian(image):
+def get_Laplacian(image,annotations):
     gray = get_grayscale(image)
     image = cv2.Laplacian(gray, cv2.CV_64F)
-    return np.uint8(np.absolute(image))
+    image = np.uint8(np.absolute(image))
 
-def get_Sobel(image):
+    # resize annotations
+    new_annotations = []
+    for annotation in annotations:
+        annotation = annotation.split(' ')
+        annotation[0] = int(annotation[0])
+        annotation[1] = float(annotation[1])
+        annotation[2] = float(annotation[2])
+        annotation[3] = float(annotation[3])
+        annotation[4] = float(annotation[4].strip())
+
+        x1, y1, width, height = annotation[1:]
+        new_annotations.append([annotation[0], x1, y1, width, height])
+    return image,new_annotations
+
+def get_Sobel(image,annotations):
     gray = get_grayscale(image)
     y = cv2.Sobel(gray, cv2.CV_64F,0,1)
     x = cv2.Sobel(gray, cv2.CV_64F, 1, 0)
 
-    return cv2.bitwise_or(x,y)
+    # resize annotations
+    new_annotations = []
+    for annotation in annotations:
+        annotation = annotation.split(' ')
+        annotation[0] = int(annotation[0])
+        annotation[1] = float(annotation[1])
+        annotation[2] = float(annotation[2])
+        annotation[3] = float(annotation[3])
+        annotation[4] = float(annotation[4].strip())
+
+        x1, y1, width, height = annotation[1:]
+        new_annotations.append([annotation[0], x1, y1, width, height])
+
+    return cv2.bitwise_or(x,y) , new_annotations
 #--------Color spaces
-def get_grayscale(image):
-    return cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+def get_grayscale(image,annotations):
+    # resize annotations
+    new_annotations = []
+    for annotation in annotations:
+        annotation = annotation.split(' ')
+        annotation[0] = int(annotation[0])
+        annotation[1] = float(annotation[1])
+        annotation[2] = float(annotation[2])
+        annotation[3] = float(annotation[3])
+        annotation[4] = float(annotation[4].strip())
 
-def get_HSV(image):
-    return cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+        x1, y1, width, height = annotation[1:]
+        new_annotations.append([annotation[0], x1, y1, width, height])
 
-def get_LAB(image):
-    return cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+    return cv2.cvtColor(image, cv2.COLOR_RGB2GRAY),new_annotations
+
+def get_HSV(image,annotations):
+    # resize annotations
+    new_annotations = []
+    for annotation in annotations:
+        annotation = annotation.split(' ')
+        annotation[0] = int(annotation[0])
+        annotation[1] = float(annotation[1])
+        annotation[2] = float(annotation[2])
+        annotation[3] = float(annotation[3])
+        annotation[4] = float(annotation[4].strip())
+
+        x1, y1, width, height = annotation[1:]
+        new_annotations.append([annotation[0], x1, y1, width, height])
+
+    return cv2.cvtColor(image, cv2.COLOR_RGB2HSV),new_annotations
+
+def get_LAB(image,annotations):
+    # resize annotations
+    new_annotations = []
+    for annotation in annotations:
+        annotation = annotation.split(' ')
+        annotation[0] = int(annotation[0])
+        annotation[1] = float(annotation[1])
+        annotation[2] = float(annotation[2])
+        annotation[3] = float(annotation[3])
+        annotation[4] = float(annotation[4].strip())
+
+        x1, y1, width, height = annotation[1:]
+        new_annotations.append([annotation[0], x1, y1, width, height])
+
+    return cv2.cvtColor(image, cv2.COLOR_RGB2HSV),new_annotations
 
 #--------Contours
-def get_canny(image):
+def get_canny(image,annotations):
+    # resize annotations
+    new_annotations = []
+    for annotation in annotations:
+        annotation = annotation.split(' ')
+        annotation[0] = int(annotation[0])
+        annotation[1] = float(annotation[1])
+        annotation[2] = float(annotation[2])
+        annotation[3] = float(annotation[3])
+        annotation[4] = float(annotation[4].strip())
+
+        x1, y1, width, height = annotation[1:]
+        new_annotations.append([annotation[0], x1, y1, width, height])
+
     #image =  cv2.blur(image, (5, 5))
-    return cv2.Canny(image, 125,175)
-def get_threshold(image):
+    return cv2.Canny(image, 125,175),new_annotations
+
+
+def get_threshold(image,annotations):
     image2 = get_grayscale(image)
 
     ret,thresh = cv2.threshold(image2,125,255,cv2.THRESH_BINARY)
-    return thresh
+
+    # resize annotations
+    new_annotations = []
+    for annotation in annotations:
+        annotation = annotation.split(' ')
+        annotation[0] = int(annotation[0])
+        annotation[1] = float(annotation[1])
+        annotation[2] = float(annotation[2])
+        annotation[3] = float(annotation[3])
+        annotation[4] = float(annotation[4].strip())
+
+        x1, y1, width, height = annotation[1:]
+        new_annotations.append([annotation[0], x1, y1, width, height])
+
+    return thresh,new_annotations
 
 #--------Transformation
+
+def get_translation(image, annotations, tx, ty):
+    #tx =200 , ty =100
+    # define translation matrix
+    translation_matrix = np.float32([[1, 0, tx], [0, 1, ty]])
+
+    # translate image
+    translated_image = cv2.warpAffine(image, translation_matrix, (image.shape[1], image.shape[0]))
+
+    new_annotations = []
+    for annotation in annotations:
+        class_id, x, y, width, height = annotation.split()
+        x = float(x)
+        y = float(y)
+        width = float(width)
+        height = float(height)
+
+        # scale coordinates to pixel coordinates
+        img_h, img_w = image.shape[:2]
+        x = int(x * img_w)
+        y = int(y * img_h)
+        width = int(width * img_w)
+        height = int(height * img_h)
+
+        # translate coordinates
+        x += int(tx)
+        y += int(ty)
+
+        # scale coordinates back to original coordinates
+        x = x / img_w
+        y = y / img_h
+        width = width / img_w
+        height = height / img_h
+
+        # append updated annotation
+        new_annotations.append("{} {} {} {} {}".format(class_id, x, y, width, height))
+
+    return translated_image, new_annotations
+
 def get_scale(image,height,width):
     return cv2.resize(image, (height,width), interpolation=cv2.INTER_CUBIC)
 
-def get_translation(image):
-    rows = image.shape[1]
-    cols = image.shape[0]
-    M = np.float32([[1, 0, 200], [0, 1, 100]])
-    return cv2.warpAffine(image, M, (rows, cols))
 
 def get_rotation_ccw(image):
     return cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
