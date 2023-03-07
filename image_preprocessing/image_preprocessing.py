@@ -1,4 +1,7 @@
+import math
 import os
+import random
+
 import cv2
 import pandas as pd
 import inline as inline
@@ -17,26 +20,25 @@ def preprocessing():
     for img in images_path:
         image_name = img.split('.')[0]
         f = open(annotation_path + '/'+image_name+'.txt')
-        annotations = f.readlines()
+        yolo_annotations = f.readlines()
         f.close()
 
         image = cv2.imread('../downloads/train/images/'+img)
         # Comvert BGR color from cv2 to RGB
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        image = get_Annotation(image, annotations)
+        annotations = convert_annotations(image, yolo_annotations)
+        image = draw_annotation(image, annotations)
 
         # Show image
         im_pil = Image.fromarray(image)
         im_pil.show()
 
-
         image = cv2.imread('../downloads/train/images/' + img)
         # Comvert BGR color from cv2 to RGB
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        image_pre,new_annotations = get_canny(image,annotations)    #Give the image preprocessing technique ------------------------------------------------
+        image_pre,new_annotations = get_gaussian_blur(image,annotations)    #Give the image preprocessing technique ------------------------------------------------
+        image_pre = draw_annotation(image_pre, new_annotations)
 
-
-        image_pre = get_Annotation(image_pre, new_annotations)
         # Show image
         im_pil = Image.fromarray(image_pre)
         im_pil.show()
@@ -65,17 +67,13 @@ import cv2
 import numpy as np
 
 
-
 #--------Annotation
-def get_Annotation(image,annotations):
+def convert_annotations(image,yolo_annotations):
     # convert annotations to pixel coordinates
     img_h, img_w = image.shape[:2]
     pixel_annotations = []
-    for annotation in annotations:
-        try:
-            class_id, x, y, width, height = annotation.split()
-        except:
-            class_id, x, y, width, height = annotation[:]
+    for annotation in yolo_annotations:
+        class_id, x, y, width, height = annotation.split()
 
         x = int(float(x) * img_w)
         y = int(float(y) * img_h)
@@ -83,54 +81,52 @@ def get_Annotation(image,annotations):
         height = int(float(height) * img_h)
         pixel_annotations.append((class_id, x, y, width, height))
 
-    # draw annotations on image
+    annotations = []
     for annotation in pixel_annotations:
         class_id, x, y, width, height = annotation
         x1 = int(x - width / 2)
         y1 = int(y - height / 2)
         x2 = int(x + width / 2)
         y2 = int(y + height / 2)
+        annotations.append((class_id,x1,y1,x2,y2))
+
+    return annotations
+
+
+def draw_annotation(image,annotations):
+
+    # draw annotations on image
+    for annotation in annotations:
+        class_id, x1, y1, x2, y2 = annotation
         cv2.rectangle(image, (x1, y1), (x2, y2), (255, 0, 0), 5)
+
     return image
 
 
 #--------Edge detection
 def get_Laplacian(image,annotations):
-    gray = get_grayscale(image)
-    image = cv2.Laplacian(gray, cv2.CV_64F)
+    gray = get_grayscale(image,annotations)
+    image = cv2.Laplacian(gray[0], cv2.CV_64F)
     image = np.uint8(np.absolute(image))
 
     # resize annotations
     new_annotations = []
     for annotation in annotations:
-        annotation = annotation.split(' ')
-        annotation[0] = int(annotation[0])
-        annotation[1] = float(annotation[1])
-        annotation[2] = float(annotation[2])
-        annotation[3] = float(annotation[3])
-        annotation[4] = float(annotation[4].strip())
+        class_id,x1, y1, x2, y2 = annotation
+        new_annotations.append((class_id, x1, y1, x2, y2))
 
-        x1, y1, width, height = annotation[1:]
-        new_annotations.append([annotation[0], x1, y1, width, height])
     return image,new_annotations
 
 def get_Sobel(image,annotations):
-    gray = get_grayscale(image)
-    y = cv2.Sobel(gray, cv2.CV_64F,0,1)
-    x = cv2.Sobel(gray, cv2.CV_64F, 1, 0)
+    gray = get_grayscale(image,annotations)
+    y = cv2.Sobel(gray[0], cv2.CV_64F,0,1)
+    x = cv2.Sobel(gray[0], cv2.CV_64F, 1, 0)
 
     # resize annotations
     new_annotations = []
     for annotation in annotations:
-        annotation = annotation.split(' ')
-        annotation[0] = int(annotation[0])
-        annotation[1] = float(annotation[1])
-        annotation[2] = float(annotation[2])
-        annotation[3] = float(annotation[3])
-        annotation[4] = float(annotation[4].strip())
-
-        x1, y1, width, height = annotation[1:]
-        new_annotations.append([annotation[0], x1, y1, width, height])
+        class_id, x1, y1, x2, y2 = annotation
+        new_annotations.append((class_id, x1, y1, x2, y2))
 
     return cv2.bitwise_or(x,y) , new_annotations
 #--------Color spaces
@@ -138,15 +134,8 @@ def get_grayscale(image,annotations):
     # resize annotations
     new_annotations = []
     for annotation in annotations:
-        annotation = annotation.split(' ')
-        annotation[0] = int(annotation[0])
-        annotation[1] = float(annotation[1])
-        annotation[2] = float(annotation[2])
-        annotation[3] = float(annotation[3])
-        annotation[4] = float(annotation[4].strip())
-
-        x1, y1, width, height = annotation[1:]
-        new_annotations.append([annotation[0], x1, y1, width, height])
+        class_id, x1, y1, x2, y2 = annotation
+        new_annotations.append((class_id, x1, y1, x2, y2))
 
     return cv2.cvtColor(image, cv2.COLOR_RGB2GRAY),new_annotations
 
@@ -154,15 +143,8 @@ def get_HSV(image,annotations):
     # resize annotations
     new_annotations = []
     for annotation in annotations:
-        annotation = annotation.split(' ')
-        annotation[0] = int(annotation[0])
-        annotation[1] = float(annotation[1])
-        annotation[2] = float(annotation[2])
-        annotation[3] = float(annotation[3])
-        annotation[4] = float(annotation[4].strip())
-
-        x1, y1, width, height = annotation[1:]
-        new_annotations.append([annotation[0], x1, y1, width, height])
+        class_id, x1, y1, x2, y2 = annotation
+        new_annotations.append((class_id, x1, y1, x2, y2))
 
     return cv2.cvtColor(image, cv2.COLOR_RGB2HSV),new_annotations
 
@@ -170,15 +152,8 @@ def get_LAB(image,annotations):
     # resize annotations
     new_annotations = []
     for annotation in annotations:
-        annotation = annotation.split(' ')
-        annotation[0] = int(annotation[0])
-        annotation[1] = float(annotation[1])
-        annotation[2] = float(annotation[2])
-        annotation[3] = float(annotation[3])
-        annotation[4] = float(annotation[4].strip())
-
-        x1, y1, width, height = annotation[1:]
-        new_annotations.append([annotation[0], x1, y1, width, height])
+        class_id, x1, y1, x2, y2 = annotation
+        new_annotations.append((class_id, x1, y1, x2, y2))
 
     return cv2.cvtColor(image, cv2.COLOR_RGB2HSV),new_annotations
 
@@ -187,131 +162,224 @@ def get_canny(image,annotations):
     # resize annotations
     new_annotations = []
     for annotation in annotations:
-        annotation = annotation.split(' ')
-        annotation[0] = int(annotation[0])
-        annotation[1] = float(annotation[1])
-        annotation[2] = float(annotation[2])
-        annotation[3] = float(annotation[3])
-        annotation[4] = float(annotation[4].strip())
-
-        x1, y1, width, height = annotation[1:]
-        new_annotations.append([annotation[0], x1, y1, width, height])
+        class_id, x1, y1, x2, y2 = annotation
+        new_annotations.append((class_id, x1, y1, x2, y2))
 
     #image =  cv2.blur(image, (5, 5))
     return cv2.Canny(image, 125,175),new_annotations
 
 
 def get_threshold(image,annotations):
-    image2 = get_grayscale(image)
+    gray = get_grayscale(image,annotations)
 
-    ret,thresh = cv2.threshold(image2,125,255,cv2.THRESH_BINARY)
+    ret,thresh = cv2.threshold(gray[0],125,255,cv2.THRESH_BINARY)
 
     # resize annotations
     new_annotations = []
     for annotation in annotations:
-        annotation = annotation.split(' ')
-        annotation[0] = int(annotation[0])
-        annotation[1] = float(annotation[1])
-        annotation[2] = float(annotation[2])
-        annotation[3] = float(annotation[3])
-        annotation[4] = float(annotation[4].strip())
-
-        x1, y1, width, height = annotation[1:]
-        new_annotations.append([annotation[0], x1, y1, width, height])
+        class_id, x1, y1, x2, y2 = annotation
+        new_annotations.append((class_id, x1, y1, x2, y2))
 
     return thresh,new_annotations
 
 #--------Transformation
 
-def get_translation(image, annotations, tx, ty):
-    #tx =200 , ty =100
-    # define translation matrix
-    translation_matrix = np.float32([[1, 0, tx], [0, 1, ty]])
+def get_translation(image, annotations, dx, dy):
+    #dx =200 , dy =100
+    # Translate the image using the specified amounts of dx and dy
+    rows, cols = image.shape[:2]
+    M = np.float32([[1, 0, dx], [0, 1, dy]])
+    translated_image = cv2.warpAffine(image, M, (cols, rows))
 
-    # translate image
-    translated_image = cv2.warpAffine(image, translation_matrix, (image.shape[1], image.shape[0]))
+    # Update the annotations based on the image translation
+    translated_annotations = []
+    for annotation in annotations:
+        class_id, x1, y1, x2, y2 = annotation
+        x1 += dx
+        x2 += dx
+        y1 += dy
+        y2 += dy
+        translated_annotations.append((class_id, x1, y1, x2, y2))
 
+    return translated_image, translated_annotations
+
+
+def get_scale(image, annotations, scale_factor):
+    # Get image dimensions
+    height, width = image.shape[:2]
+
+    # Scale the image
+    scaled_image = cv2.resize(image, None, fx=scale_factor, fy=scale_factor)
+
+    # Scale the annotations
+    scaled_annotations = []
+    for annotation in annotations:
+        class_id, x1, y1, x2, y2 = annotation
+        scaled_x1 = int(x1 * scale_factor)
+        scaled_y1 = int(y1 * scale_factor)
+        scaled_x2 = int(x2 * scale_factor)
+        scaled_y2 = int(y2 * scale_factor)
+        scaled_annotations.append((class_id, scaled_x1, scaled_y1, scaled_x2, scaled_y2))
+
+    return scaled_image, scaled_annotations
+
+
+
+def get_rotation_ccw(image, annotations):
+    # get image height and width
+    img_h, img_w = image.shape[:2]
+
+    # rotate image
+    rotated_img = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+
+    # rotate annotation coordinates
+    rotated_ann = []
+    for ann in annotations:
+        class_id, x1, y1, x2, y2 = ann
+        new_x1 = y1
+        new_y1 = img_w - x2
+        new_x2 = y2
+        new_y2 = img_w - x1
+        rotated_ann.append((class_id, new_x1, new_y1, new_x2, new_y2))
+
+    return rotated_img, rotated_ann
+
+
+def get_rotation_cw(image, annotations):
+    # get image dimensions
+    img_h, img_w = image.shape[:2]
+
+    # rotate image
+    rotated_img = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
+
+    # rotate annotations
     new_annotations = []
     for annotation in annotations:
-        class_id, x, y, width, height = annotation.split()
-        x = float(x)
-        y = float(y)
-        width = float(width)
-        height = float(height)
+        class_id, x1, y1, x2, y2 = annotation
+        new_x1 = img_h - y2
+        new_y1 = x1
+        new_x2 = img_h - y1
+        new_y2 = x2
+        new_annotations.append((class_id, new_x1, new_y1, new_x2, new_y2))
 
-        # scale coordinates to pixel coordinates
-        img_h, img_w = image.shape[:2]
-        x = int(x * img_w)
-        y = int(y * img_h)
-        width = int(width * img_w)
-        height = int(height * img_h)
+    return rotated_img, new_annotations
 
-        # translate coordinates
-        x += int(tx)
-        y += int(ty)
+def get_rotation(image, annotations):
+    # rotate the image
+    rotated_image = cv2.rotate(image, cv2.ROTATE_180)
 
-        # scale coordinates back to original coordinates
-        x = x / img_w
-        y = y / img_h
-        width = width / img_w
-        height = height / img_h
+    # rotate the annotations
+    rotated_annotations = []
+    for annotation in annotations:
+        class_id, x1, y1, x2, y2 = annotation
+        new_x1 = rotated_image.shape[1] - x1
+        new_y1 = rotated_image.shape[0] - y1
+        new_x2 = rotated_image.shape[1] - x2
+        new_y2 = rotated_image.shape[0] - y2
+        rotated_annotations.append((class_id, new_x2, new_y2, new_x1, new_y1))
 
-        # append updated annotation
-        new_annotations.append("{} {} {} {} {}".format(class_id, x, y, width, height))
+    return rotated_image, rotated_annotations
 
-    return translated_image, new_annotations
+def get_resize(image, annotations, scale_percent):
+    # Get image dimensions
+    img_h, img_w = image.shape[:2]
 
-def get_scale(image,height,width):
-    return cv2.resize(image, (height,width), interpolation=cv2.INTER_CUBIC)
+    # Scale the image
+    width = int(img_w * scale_percent / 100)
+    height = int(img_h * scale_percent / 100)
+    image = cv2.resize(image, (width, height))
 
+    # Scale the annotations accordingly
+    scaled_annotations = []
+    for annotation in annotations:
+        class_id, x1, y1, x2, y2 = annotation
+        x1 = int(x1 * (width / img_w))
+        y1 = int(y1 * (height / img_h))
+        x2 = int(x2 * (width / img_w))
+        y2 = int(y2 * (height / img_h))
+        scaled_annotations.append((class_id, x1, y1, x2, y2))
 
-def get_rotation_ccw(image):
-    return cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+    return image, scaled_annotations
 
-def get_rotation_cw(image):
-    return cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
+def get_crop(img, annotations, crop_size):
 
-def get_rotation(image):
-    return cv2.rotate(image, cv2.ROTATE_180)
+    #:param crop_size: size of the cropped image for example crop_size=3000
 
-def get_resize_dimentions(image,height,width):
-    return cv2.resize(image, (height,width))
+    # Get image dimensions
+    height, width = img.shape[:2]
 
-def get_resize(image):
-    return cv2.resize(image, None, fx=0.10, fy=0.10)
+    # Randomly select a crop location
+    x = random.randint(0, width - crop_size)
+    y = random.randint(0, height - crop_size)
 
-def get_rotate(image,angle,rotPoint=None):
-    (height,width) = image.shape[:2]
-    if rotPoint is None:
-        rotPoint = (width//2,height//2)
-    rotMat=cv2.getRotationMatrix2D(rotPoint,angle,1.0)
-    dimensions = (width,height)
-    return cv2.warpAffine(image, rotMat, dimensions)
+    # Crop the image
+    crop_img = img[y:y + crop_size, x:x + crop_size]
 
-def get_crop(image):
-    rows = image.shape[1]
-    cols = image.shape[0]
-    hgt, wdt = image.shape[:2]
-    start_row, start_col = int(hgt * .25), int(wdt * .25)
-    end_row, end_col = int(cols * .75), int(rows * .75)
-    return image[start_row:end_row, start_col:end_col]
+    # Adjust the annotations based on the crop location
+    new_annotations = []
+    for annotation in annotations:
+        class_id, x1, y1, x2, y2 = annotation
+        # Check if annotation is completely inside the crop region
+        if x <= x1 and x + crop_size >= x2 and y <= y1 and y + crop_size >= y2:
+            new_x1, new_y1, new_x2, new_y2 = x1 - x, y1 - y, x2 - x, y2 - y
+            new_annotations.append((class_id, new_x1, new_y1, new_x2, new_y2))
+        # Check if annotation is partially inside the crop region
+        elif x <= x1 < x + crop_size or x <= x2 < x + crop_size:
+            new_x1 = max(x1 - x, 0)
+            new_x2 = min(x2 - x, crop_size)
+            if y <= y1 < y + crop_size:
+                new_y1 = max(y1 - y, 0)
+                new_y2 = min(y2 - y, crop_size)
+                new_annotations.append((class_id, new_x1, new_y1, new_x2, new_y2))
+            elif y <= y2 < y + crop_size:
+                new_y1 = max(y2 - y, 0)
+                new_y2 = min(y2 - y + (y2 - y1), crop_size)
+                new_annotations.append((class_id, new_x1, new_y1, new_x2, new_y2))
+        # Check if annotation is completely outside the crop region
+        elif x1 >= x + crop_size or x2 <= x or y1 >= y + crop_size or y2 <= y:
+            continue
+
+    return crop_img, new_annotations
 
 #--------Blur
-def get_blur(image):
+def get_blur(image,annotations):
+    # resize annotations
+    new_annotations = []
+    for annotation in annotations:
+        class_id, x1, y1, x2, y2 = annotation
+        new_annotations.append((class_id, x1, y1, x2, y2))
     #Avarage blur
-    return cv2.blur(image, (10, 10))
+    return cv2.blur(image, (10, 10)),new_annotations
 
-def get_gaussian_blur(image):
-    return cv2.GaussianBlur(image,(7,7),0)
+def get_gaussian_blur(image,annotations):
+    # resize annotations
+    new_annotations = []
+    for annotation in annotations:
+        class_id, x1, y1, x2, y2 = annotation
+        new_annotations.append((class_id, x1, y1, x2, y2))
+
+    return cv2.GaussianBlur(image,(7,7),0),new_annotations
 
 
-def get_median_blur(image):
+def get_median_blur(image,annotations):
+    # resize annotations
+    new_annotations = []
+    for annotation in annotations:
+        class_id, x1, y1, x2, y2 = annotation
+        new_annotations.append((class_id, x1, y1, x2, y2))
+
     #best to remove noise
-    return cv2.medianBlur(image,5)
+    return cv2.medianBlur(image,5),new_annotations
 
-def get_bilateral_blur(image):
+def get_bilateral_blur(image,annotations):
+    # resize annotations
+    new_annotations = []
+    for annotation in annotations:
+        class_id, x1, y1, x2, y2 = annotation
+        new_annotations.append((class_id, x1, y1, x2, y2))
+
     #blur with keeping edges
-    return cv2.bilateralFilter(image,5,15,15)
+    return cv2.bilateralFilter(image,5,15,15),new_annotations
 
 #--------Histogram
 def show_histogram(image):
