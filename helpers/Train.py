@@ -72,6 +72,7 @@ class Train:
                         f.write(classes[annotation['comment']] + " " + " ".join(yolo)+"\n")
                     else:
                         print("Annotation", annotation['id'], "of image", image['filename'], "does not have class")
+                        f.write("3 " + " ".join(yolo)+"\n")
                 f.close()
                 if not os.path.exists(image_path):
                     self.DownloadUAVImage(image['filename'])
@@ -110,6 +111,8 @@ class Train:
                         f.write(classes[annotation['comment']] + " " + " ".join(yolo)+"\n")
                     else:
                         print("Annotation", annotation['id'], "of image", image['filename'], "does not have class")
+                        f.write("3 " + " ".join(yolo)+"\n")
+
                 f.close()
                 if not os.path.exists(image_path):
                     self.DownloadUGVImage(image['filename'])
