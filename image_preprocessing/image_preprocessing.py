@@ -29,21 +29,21 @@ def preprocessing():
         annotations = convert_annotations(image, yolo_annotations)
         image = draw_annotation(image, annotations)
 
-        # Show image
-        im_pil = Image.fromarray(image)
-        im_pil.show()
+        # # Show image
+        # im_pil = Image.fromarray(image)
+        # im_pil.show()
 
         image = cv2.imread('../downloads/train/images/' + img)
         # Comvert BGR color from cv2 to RGB
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        image_pre,new_annotations = get_gaussian_blur(image,annotations)    #Give the image preprocessing technique ------------------------------------------------
+        image_pre,new_annotations = get_grayscale(image,annotations)    #Give the image preprocessing technique ------------------------------------------------
         image_pre = draw_annotation(image_pre, new_annotations)
 
-        # Show image
-        im_pil = Image.fromarray(image_pre)
-        im_pil.show()
+        # # Show image
+        # im_pil = Image.fromarray(image_pre)
+        # im_pil.show()
 
-
+        final_yolo_annotations = convert_to_yolo(image_pre, new_annotations)
 
         new_image_folder_path = 'new_data/get_Laplacian'   #set name of folder
         if not os.path.exists(new_image_folder_path):
@@ -54,6 +54,15 @@ def preprocessing():
             os.mkdir(new_image_folder_path+'/labels')
 
         cv2.imwrite(new_image_folder_path+'/images/'+image_name+'.jpg', image_pre)
+        if os.path.exists(new_image_folder_path+"/labels/"+image_name+".txt"):
+            os.remove(new_image_folder_path+"/labels/"+image_name+".txt")
+        for annotation in final_yolo_annotations:
+            class_id, x, y, width, height = annotation
+            line = class_id+' '+str(x)+' '+str(y)+' '+str(width)+' '+str(height)+'\n'
+            f = open(new_image_folder_path+"/labels/"+image_name+".txt", "a")
+            f.write(line)
+            f.close()
+
 
         exit()
 
@@ -73,7 +82,10 @@ def convert_annotations(image,yolo_annotations):
     img_h, img_w = image.shape[:2]
     pixel_annotations = []
     for annotation in yolo_annotations:
-        class_id, x, y, width, height = annotation.split()
+        try:
+            class_id, x, y, width, height = annotation.split()
+        except:
+            class_id, x, y, width, height = annotation
 
         x = int(float(x) * img_w)
         y = int(float(y) * img_h)
@@ -92,6 +104,20 @@ def convert_annotations(image,yolo_annotations):
 
     return annotations
 
+def convert_to_yolo(image, annotations):
+
+    # convert annotations to YOLOv5 format
+    img_h, img_w = image.shape[:2]
+    yolo_annotations = []
+    for annotation in annotations:
+
+        class_id, x1, y1, x2, y2 = annotation
+        x = (x1 + x2) / 2 / img_w
+        y = (y1 + y2) / 2 / img_h
+        width = (x2 - x1) / img_w
+        height = (y2 - y1) / img_h
+        yolo_annotations.append((class_id, x, y, width, height))
+    return yolo_annotations
 
 def draw_annotation(image,annotations):
 
