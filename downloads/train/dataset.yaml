@@ -1,8 +1,9 @@
+path: /content/yolov5
 train: ./images/
 val: ./images/
 
 # number of classes
-nc: 3
+nc: 4
 
 # class names
-names: ["Skoriasi", "Tetranychos", "Prasino Skouliki"]
+names: ["Skoriasi", "Tetranychos", "Prasino Skouliki", "NoComment"]
