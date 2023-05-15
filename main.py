@@ -11,6 +11,7 @@ from helpers.API import API
 import logging
 from helpers.detect import DiseaseDetection
 from flask import jsonify
+from helpers.Train import Train
 
 load_dotenv()
 API_BASE_URL = os.getenv('API_BASE_URL')
@@ -39,6 +40,12 @@ def train():
     checkpoint = request.args.get('checkpoint')
     input_pre = 'train'
     output_pre = 'combined_methods'
+    api = Train(API_BASE_URL, JWT)
+    api.GetUAVImageDetails()
+    result = api.DownloadUAVImages()
+    api.GetUGVImageDetails()
+    result = api.DownloadUGVImages()
+    print(result)
     preprocessing(['get_Laplacian','get_crop'],input_pre,output_pre)
     train_yolov5(output_pre, checkpoint)
     return jsonify("Training started.")
