@@ -1,0 +1,9 @@
+path: D:\velos-disease-detection\preprocessing_folders\combined_methods
+train: ./images/
+val: ./images/
+
+# number of classes
+nc: 4
+
+# class names
+names: ["Skoriasi", "Tetranychos", "Prasino Skouliki", "NoComment"]
