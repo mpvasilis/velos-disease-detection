@@ -13,10 +13,11 @@ from PIL import Image
 
 
 
+# https://www.youtube.com/watch?v=oXlwWbU8l2o
 def preprocessing(methods,train_name,folder_name):
-    images_path = './downloads/' + train_name + '/images'
+    images_path = '../downloads/' + train_name + '/images'
     images_list= os.listdir(images_path)
-    annotation_path = './downloads/'+train_name+'/labels'
+    annotation_path = '../downloads/'+train_name+'/labels'
 
     tr_name_flag = True
     for method in methods:
@@ -81,6 +82,9 @@ def preprocessing(methods,train_name,folder_name):
         # im_pil = Image.fromarray(img2)
         # im_pil.show()
 
+    yaml_path = './preprocessing_folders/'+folder_name+'/'
+    create_yaml(yaml_path)
+
 
 import cv2
 import numpy as np
@@ -95,13 +99,13 @@ def menu(fun_name,image, annotations,folder_name):
         image_pre, new_annotations = get_Laplacian(image, annotations)  # Give the image preprocessing technique ------------------------------------------------
         new_image_folder_path = 'preprocessing_folders/'+folder_name  # set name of folder
     elif fun_name == 'get_Sobel':
-        image_pre, new_annotations = get_Sobel(image,annotations)  
+        image_pre, new_annotations = get_Sobel(image,annotations)
         new_image_folder_path = 'preprocessing_folders/' + folder_name +'/'
     elif fun_name == 'get_grayscale':
-        image_pre, new_annotations = get_grayscale(image,annotations)  
+        image_pre, new_annotations = get_grayscale(image,annotations)
         new_image_folder_path = 'preprocessing_folders/' + folder_name +'/'
     elif fun_name == 'get_HSV':
-        image_pre, new_annotations = get_HSV(image,annotations)  
+        image_pre, new_annotations = get_HSV(image,annotations)
         new_image_folder_path = 'preprocessing_folders/' + folder_name
     elif fun_name == 'get_LAB':
         image_pre, new_annotations = get_LAB(image,annotations)
@@ -150,8 +154,29 @@ def menu(fun_name,image, annotations,folder_name):
     elif fun_name == 'get_bilateral_blur':
         image_pre, new_annotations = get_bilateral_blur(image, annotations)
         new_image_folder_path = 'preprocessing_folders/' + folder_name
+    elif fun_name == 'get_default_resize':
+        image_pre, new_annotations = get_default_resize(image, annotations)
+        new_image_folder_path = 'preprocessing_folders/' + folder_name
 
     return image_pre, new_annotations,new_image_folder_path
+
+def create_yaml(yaml_path):
+    data = {
+        'path': yaml_path,
+        'train': './images/',
+        'val': './images/',
+        'nc': 4,
+        'names': ["Skoriasi", "Tetranychos", "Prasino Skouliki", "NoComment"]
+    }
+
+    with open(yaml_path+'dataset.yaml', 'w') as file:
+        for key, value in data.items():
+            if isinstance(value, list):
+                value = [str(item) for item in value]
+                value = '[' + ', '.join(value) + ']'
+            file.write(f'{key}: {value}\n')
+
+
 #--------Annotation
 def convert_annotations(image,yolo_annotations):
     # convert annotations to pixel coordinates
@@ -398,6 +423,26 @@ def get_resize(image, annotations, scale_percent):
 
     return image, scaled_annotations
 
+
+def get_default_resize(image, annotations, width=640, height=640):
+    # Get original image dimensions
+    img_h, img_w = image.shape[:2]
+
+    # Resize the image
+    image = cv2.resize(image, (width, height))
+
+    # Scale the annotations accordingly
+    scaled_annotations = []
+    for annotation in annotations:
+        class_id, x1, y1, x2, y2 = annotation
+        x1 = int(x1 * (width / img_w))
+        y1 = int(y1 * (height / img_h))
+        x2 = int(x2 * (width / img_w))
+        y2 = int(y2 * (height / img_h))
+        scaled_annotations.append((class_id, x1, y1, x2, y2))
+
+    return image, scaled_annotations
+
 def get_crop(img, annotations, crop_size):
 
     #:param crop_size: size of the cropped image for example crop_size=3000
@@ -476,3 +521,4 @@ def get_bilateral_blur(image,annotations):
 
     #blur with keeping edges
     return cv2.bilateralFilter(image,5,15,15),new_annotations
+
