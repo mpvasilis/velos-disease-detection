@@ -14,58 +14,70 @@ from PIL import Image
 
 
 # https://www.youtube.com/watch?v=oXlwWbU8l2o
-def preprocessing():
-    images_path= os.listdir("../downloads/train/images")
-    annotation_path = '../downloads/train/labels'
-    for img in images_path:
-        image_name = img.split('.')[0]
-        f = open(annotation_path + '/'+image_name+'.txt')
-        yolo_annotations = f.readlines()
-        f.close()
+def preprocessing(methods,train_name,folder_name):
+    images_path = '../downloads/' + train_name + '/images'
+    images_list= os.listdir(images_path)
+    annotation_path = '../downloads/'+train_name+'/labels'
 
-        image = cv2.imread('../downloads/train/images/'+img)
-        # Comvert BGR color from cv2 to RGB
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        annotations = convert_annotations(image, yolo_annotations)
-        image = draw_annotation(image, annotations)
-
-        # # Show image
-        # im_pil = Image.fromarray(image)
-        # im_pil.show()
-
-        image = cv2.imread('../downloads/train/images/' + img)
-        # Comvert BGR color from cv2 to RGB
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        image_pre,new_annotations = get_grayscale(image,annotations)    #Give the image preprocessing technique ------------------------------------------------
-        image_pre = draw_annotation(image_pre, new_annotations)
-
-        # # Show image
-        # im_pil = Image.fromarray(image_pre)
-        # im_pil.show()
-
-        final_yolo_annotations = convert_to_yolo(image_pre, new_annotations)
-
-        new_image_folder_path = 'new_data/get_Laplacian'   #set name of folder
-        if not os.path.exists(new_image_folder_path):
-            os.mkdir(new_image_folder_path)
-        if not os.path.exists(new_image_folder_path+'/images'):
-            os.mkdir(new_image_folder_path+'/images')
-        if not os.path.exists(new_image_folder_path+'/labels'):
-            os.mkdir(new_image_folder_path+'/labels')
-
-        cv2.imwrite(new_image_folder_path+'/images/'+image_name+'.jpg', image_pre)
-        if os.path.exists(new_image_folder_path+"/labels/"+image_name+".txt"):
-            os.remove(new_image_folder_path+"/labels/"+image_name+".txt")
-        for annotation in final_yolo_annotations:
-            class_id, x, y, width, height = annotation
-            line = class_id+' '+str(x)+' '+str(y)+' '+str(width)+' '+str(height)+'\n'
-            f = open(new_image_folder_path+"/labels/"+image_name+".txt", "a")
-            f.write(line)
+    tr_name_flag = True
+    for method in methods:
+        print(method)
+        if tr_name_flag:
+            tr_name_flag = False
+        else:
+            images_path = 'preprocessing_folders/'+folder_name+'/images'
+        for img in images_list:
+            if img == 'dataset.yaml':
+                continue
+            print(img)
+            image_name = img.split('.')[0]
+            f = open(annotation_path + '/'+image_name+'.txt')
+            yolo_annotations = f.readlines()
             f.close()
 
+            image = cv2.imread(images_path+'/'+img)
+            # Comvert BGR color from cv2 to RGB
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            annotations = convert_annotations(image, yolo_annotations)
 
-        exit()
+            #image = draw_annotation(image, annotations)   #draw annotations
 
+            # # Show image
+            # im_pil = Image.fromarray(image)
+            # im_pil.show()
+
+            image = cv2.imread(images_path+'/'+ img)
+            # Comvert BGR color from cv2 to RGB
+            #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+            image_pre, new_annotations,new_image_folder_path =  menu(method,image,annotations,folder_name)
+
+            #image_pre = draw_annotation(image_pre, new_annotations) #draw annotations
+
+            # # Show image
+            # im_pil = Image.fromarray(image_pre)
+            # im_pil.show()
+
+            final_yolo_annotations = convert_to_yolo(image_pre, new_annotations)
+
+            if not os.path.exists(new_image_folder_path):
+                os.mkdir(new_image_folder_path)
+            if not os.path.exists(new_image_folder_path+'/images'):
+                os.mkdir(new_image_folder_path+'/images')
+            if not os.path.exists(new_image_folder_path+'/labels'):
+                os.mkdir(new_image_folder_path+'/labels')
+
+            cv2.imwrite(new_image_folder_path+'/images/'+image_name+'.jpg', image_pre)
+            if os.path.exists(new_image_folder_path+"/labels/"+image_name+".txt"):
+                os.remove(new_image_folder_path+"/labels/"+image_name+".txt")
+            for annotation in final_yolo_annotations:
+                class_id, x, y, width, height = annotation
+                line = class_id+' '+str(x)+' '+str(y)+' '+str(width)+' '+str(height)+'\n'
+                f = open(new_image_folder_path+"/labels/"+image_name+".txt", "a")
+                f.write(line)
+                f.close()
+
+            break
         # # Show image
         # img2 = cv2.cvtColor(imag2, cv2.COLOR_BGR2RGB)
         # im_pil = Image.fromarray(img2)
@@ -76,6 +88,72 @@ import cv2
 import numpy as np
 
 
+
+
+def menu(fun_name,image, annotations,folder_name):
+
+
+    if fun_name == 'get_Laplacian':
+        image_pre, new_annotations = get_Laplacian(image, annotations)  # Give the image preprocessing technique ------------------------------------------------
+        new_image_folder_path = 'preprocessing_folders/'+folder_name  # set name of folder
+    elif fun_name == 'get_Sobel':
+        image_pre, new_annotations = get_Sobel(image,annotations)  
+        new_image_folder_path = 'preprocessing_folders/' + folder_name +'/'
+    elif fun_name == 'get_grayscale':
+        image_pre, new_annotations = get_grayscale(image,annotations)  
+        new_image_folder_path = 'preprocessing_folders/' + folder_name +'/'
+    elif fun_name == 'get_HSV':
+        image_pre, new_annotations = get_HSV(image,annotations)  
+        new_image_folder_path = 'preprocessing_folders/' + folder_name
+    elif fun_name == 'get_LAB':
+        image_pre, new_annotations = get_LAB(image,annotations)
+        new_image_folder_path = 'preprocessing_folders/' + folder_name
+    elif fun_name == 'get_canny':
+        image_pre, new_annotations = get_canny(image,annotations)
+        new_image_folder_path = 'preprocessing_folders/' + folder_name
+    elif fun_name == 'get_threshold':
+        image_pre, new_annotations = get_threshold(image,annotations)
+        new_image_folder_path = 'preprocessing_folders/' + folder_name
+    elif fun_name == 'get_translation':
+        dx = 200 #Give the right values
+        dy = 100 #Give the right values
+        image_pre, new_annotations = get_translation(image,annotations, dx, dy)
+        new_image_folder_path = 'preprocessing_folders/' + folder_name
+    elif fun_name == 'get_scale':
+        scale_factor = 0.3
+        image_pre, new_annotations = get_scale(image,annotations,scale_factor)
+        new_image_folder_path = 'preprocessing_folders/' + folder_name
+    elif fun_name == 'get_rotation_ccw':
+        image_pre, new_annotations = get_rotation_ccw(image,annotations)
+        new_image_folder_path = 'preprocessing_folders/' + folder_name
+    elif fun_name == 'get_rotation_cw':
+        image_pre, new_annotations = get_rotation_cw(image,annotations)
+        new_image_folder_path = 'preprocessing_folders/' + folder_name
+    elif fun_name == 'get_rotation':
+        image_pre, new_annotations = get_rotation(image,annotations)
+        new_image_folder_path = 'preprocessing_folders/' + folder_name
+    elif fun_name == 'get_resize':
+        scale_percent = 20
+        image_pre, new_annotations = get_resize(image, annotations,scale_percent)
+        new_image_folder_path = 'preprocessing_folders/' + folder_name
+    elif fun_name == 'get_crop':
+        crop_size = 3000
+        image_pre, new_annotations = get_crop(image, annotations, crop_size)
+        new_image_folder_path = 'preprocessing_folders/' + folder_name
+    elif fun_name == 'get_blur':
+        image_pre, new_annotations = get_blur(image, annotations)
+        new_image_folder_path = 'preprocessing_folders/' + folder_name
+    elif fun_name == 'get_gaussian_blur':
+        image_pre, new_annotations = get_gaussian_blur(image, annotations)
+        new_image_folder_path = 'preprocessing_folders/' + folder_name
+    elif fun_name == 'get_median_blur':
+        image_pre, new_annotations = get_median_blur(image, annotations)
+        new_image_folder_path = 'preprocessing_folders/' + folder_name
+    elif fun_name == 'get_bilateral_blur':
+        image_pre, new_annotations = get_bilateral_blur(image, annotations)
+        new_image_folder_path = 'preprocessing_folders/' + folder_name
+
+    return image_pre, new_annotations,new_image_folder_path
 #--------Annotation
 def convert_annotations(image,yolo_annotations):
     # convert annotations to pixel coordinates
@@ -194,7 +272,6 @@ def get_canny(image,annotations):
     #image =  cv2.blur(image, (5, 5))
     return cv2.Canny(image, 125,175),new_annotations
 
-
 def get_threshold(image,annotations):
     gray = get_grayscale(image,annotations)
 
@@ -229,7 +306,6 @@ def get_translation(image, annotations, dx, dy):
 
     return translated_image, translated_annotations
 
-
 def get_scale(image, annotations, scale_factor):
     # Get image dimensions
     height, width = image.shape[:2]
@@ -249,8 +325,6 @@ def get_scale(image, annotations, scale_factor):
 
     return scaled_image, scaled_annotations
 
-
-
 def get_rotation_ccw(image, annotations):
     # get image height and width
     img_h, img_w = image.shape[:2]
@@ -269,7 +343,6 @@ def get_rotation_ccw(image, annotations):
         rotated_ann.append((class_id, new_x1, new_y1, new_x2, new_y2))
 
     return rotated_img, rotated_ann
-
 
 def get_rotation_cw(image, annotations):
     # get image dimensions
@@ -386,7 +459,6 @@ def get_gaussian_blur(image,annotations):
 
     return cv2.GaussianBlur(image,(7,7),0),new_annotations
 
-
 def get_median_blur(image,annotations):
     # resize annotations
     new_annotations = []
@@ -407,16 +479,16 @@ def get_bilateral_blur(image,annotations):
     #blur with keeping edges
     return cv2.bilateralFilter(image,5,15,15),new_annotations
 
+
+
+
 #--------Histogram
 def show_histogram(image):
     #Plot histogram
     img_hist = image / 255
     pd.Series(img_hist.flatten()).plot(kind='hist',bins=50,)
     plt.show()
-
-
 #--------RGB chanels
-
 def show_RGB_chanels(image):
     # Show RGB
     fig, axs = plt.subplots(1, 3, figsize=(15, 5))
@@ -428,4 +500,31 @@ def show_RGB_chanels(image):
     axs[2].axis('off')
     plt.show()
 
-preprocessing()
+
+
+fun_names = [
+    'get_Laplacian',
+    'get_Sobel',
+    'get_grayscale',
+    'get_HSV',
+    'get_LAB',
+    'get_canny',
+    'get_threshold',
+    'get_translation',
+    'get_scale',
+    'get_rotation_ccw',
+    'get_rotation_cw',
+    'get_rotation',
+    'get_resize',
+    'get_crop',
+    'get_blur',
+    'get_gaussian_blur',
+    'get_median_blur',
+    'get_bilateral_blur'
+]
+
+combined_methods=['get_Laplacian','get_crop']
+train_name = 'train'
+folder_name = 'combined_methods'
+
+preprocessing(combined_methods,train_name,folder_name)
