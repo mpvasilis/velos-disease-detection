@@ -15,9 +15,9 @@ from PIL import Image
 
 # https://www.youtube.com/watch?v=oXlwWbU8l2o
 def preprocessing(methods,train_name,folder_name):
-    images_path = '../downloads/' + train_name + '/images'
+    images_path = './downloads/' + train_name + '/images'
     images_list= os.listdir(images_path)
-    annotation_path = '../downloads/'+train_name+'/labels'
+    annotation_path = './downloads/'+train_name+'/labels'
 
     tr_name_flag = True
     for method in methods:
@@ -478,53 +478,3 @@ def get_bilateral_blur(image,annotations):
 
     #blur with keeping edges
     return cv2.bilateralFilter(image,5,15,15),new_annotations
-
-
-
-
-#--------Histogram
-def show_histogram(image):
-    #Plot histogram
-    img_hist = image / 255
-    pd.Series(img_hist.flatten()).plot(kind='hist',bins=50,)
-    plt.show()
-#--------RGB chanels
-def show_RGB_chanels(image):
-    # Show RGB
-    fig, axs = plt.subplots(1, 3, figsize=(15, 5))
-    axs[0].imshow(image[:, :, 0], cmap='Reds')
-    axs[1].imshow(image[:, :, 1], cmap='Greens')
-    axs[2].imshow(image[:, :, 2], cmap='Blues')
-    axs[0].axis('off')
-    axs[1].axis('off')
-    axs[2].axis('off')
-    plt.show()
-
-
-
-fun_names = [
-    'get_Laplacian',
-    'get_Sobel',
-    'get_grayscale',
-    'get_HSV',
-    'get_LAB',
-    'get_canny',
-    'get_threshold',
-    'get_translation',
-    'get_scale',
-    'get_rotation_ccw',
-    'get_rotation_cw',
-    'get_rotation',
-    'get_resize',
-    'get_crop',
-    'get_blur',
-    'get_gaussian_blur',
-    'get_median_blur',
-    'get_bilateral_blur'
-]
-
-combined_methods=['get_Laplacian','get_crop']
-train_name = 'train'
-folder_name = 'combined_methods'
-
-preprocessing(combined_methods,train_name,folder_name)

@@ -1,6 +1,10 @@
 import json
 import os
 from flask import Flask, request, jsonify
+
+from image_preprocessing.image_preprocessing import preprocessing
+from train import train_yolov5
+
 app = Flask(__name__)
 from dotenv import load_dotenv
 from helpers.API import API
@@ -13,6 +17,7 @@ API_BASE_URL = os.getenv('API_BASE_URL')
 JWT = os.getenv('JWT')
 logging.basicConfig(level=os.getenv('LOGLEVEL'))
 log = logging.getLogger("VELOS")
+
 
 @app.route('/detectDieasesForMission')
 def detectDieasesForMission():
@@ -27,6 +32,16 @@ def detectDieasesForMission():
         return jsonify("Added to queue") #TODO: Queue will be implemeted
     else:
         return jsonify("Empty image list")
+
+
+@app.route('/train', methods=['GET'])
+def train():
+    checkpoint = request.args.get('checkpoint')
+    input_pre = 'train'
+    output_pre = 'combined_methods'
+    preprocessing(['get_Laplacian','get_crop'],input_pre,output_pre)
+    train_yolov5(output_pre, checkpoint)
+    return jsonify("Training started.")
 
 
 
