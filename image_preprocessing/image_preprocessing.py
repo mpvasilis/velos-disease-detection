@@ -15,9 +15,9 @@ from PIL import Image
 
 # https://www.youtube.com/watch?v=oXlwWbU8l2o
 def preprocessing(methods,train_name,folder_name):
-    images_path = '../downloads/' + train_name + '/images'
+    images_path = './downloads/' + train_name + '/images'
     images_list= os.listdir(images_path)
-    annotation_path = '../downloads/'+train_name+'/labels'
+    annotation_path = './downloads/'+train_name+'/labels'
 
     tr_name_flag = True
     for method in methods:
