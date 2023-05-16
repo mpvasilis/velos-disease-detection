@@ -76,14 +76,14 @@ def preprocessing(methods,train_name,folder_name):
                 f = open(new_image_folder_path+"/labels/"+image_name+".txt", "a")
                 f.write(line)
                 f.close()
-
+            break
         # # Show image
         # img2 = cv2.cvtColor(imag2, cv2.COLOR_BGR2RGB)
         # im_pil = Image.fromarray(img2)
         # im_pil.show()
 
-    yaml_path = './preprocessing_folders/'+folder_name+'/'
-    create_yaml(yaml_path)
+    yaml_path = 'preprocessing_folders/'+folder_name+'/'
+    create_yaml(yaml_path,folder_name)
 
 
 import cv2
@@ -160,15 +160,21 @@ def menu(fun_name,image, annotations,folder_name):
 
     return image_pre, new_annotations,new_image_folder_path
 
-def create_yaml(yaml_path):
+def create_yaml(yaml_path,folder_name):
+    current_file = __file__
+    current_file = current_file.replace("image_preprocessing.py", yaml_path)
+
+    current_file_path = os.path.abspath(current_file)
+
     data = {
-        'path': yaml_path,
+        'path': current_file_path,
         'train': './images/',
         'val': './images/',
         'nc': 4,
         'names': ["Skoriasi", "Tetranychos", "Prasino Skouliki", "NoComment"]
     }
 
+    yaml_path = './preprocessing_folders/' + folder_name + '/'
     with open(yaml_path+'dataset.yaml', 'w') as file:
         for key, value in data.items():
             if isinstance(value, list):
