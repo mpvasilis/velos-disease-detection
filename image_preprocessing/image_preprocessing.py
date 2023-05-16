@@ -76,7 +76,6 @@ def preprocessing(methods,train_name,folder_name):
                 f = open(new_image_folder_path+"/labels/"+image_name+".txt", "a")
                 f.write(line)
                 f.close()
-            break
         # # Show image
         # img2 = cv2.cvtColor(imag2, cv2.COLOR_BGR2RGB)
         # im_pil = Image.fromarray(img2)
