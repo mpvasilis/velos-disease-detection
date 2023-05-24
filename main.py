@@ -2,7 +2,7 @@ import json
 import os
 from flask import Flask, request, jsonify
 
-from image_preprocessing.image_preprocessing import preprocessing
+from image_preprocessing.image_preprocessing import parallel_preprocessing
 from train import train_yolov5
 
 app = Flask(__name__)
@@ -46,7 +46,7 @@ def train():
     api.GetUGVImageDetails()
     result = api.DownloadUGVImages()
     print(result)
-    preprocessing(['get_Laplacian','get_crop'],input_pre,output_pre)
+    parallel_preprocessing(['get_Laplacian','get_crop'],input_pre,output_pre)
     train_yolov5(output_pre, checkpoint)
     return jsonify("Training started.")
 

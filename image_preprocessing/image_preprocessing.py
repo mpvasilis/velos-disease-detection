@@ -10,6 +10,59 @@ import numpy as np
 import matplotlib.pyplot as plt
 import json
 from PIL import Image
+import concurrent.futures
+
+def preprocess_image(method, img, images_path, annotation_path, folder_name):
+    image_name = img.split('.')[0]
+    f = open(annotation_path + '/' + image_name + '.txt')
+    yolo_annotations = f.readlines()
+    f.close()
+
+    image = cv2.imread(images_path + '/' + img)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    annotations = convert_annotations(image, yolo_annotations)
+
+    image_pre, new_annotations, new_image_folder_path = menu(method, image, annotations, folder_name)
+
+    final_yolo_annotations = convert_to_yolo(image_pre, new_annotations)
+
+    if not os.path.exists(new_image_folder_path):
+        os.mkdir(new_image_folder_path)
+    if not os.path.exists(new_image_folder_path + '/images'):
+        os.mkdir(new_image_folder_path + '/images')
+    if not os.path.exists(new_image_folder_path + '/labels'):
+        os.mkdir(new_image_folder_path + '/labels')
+
+    cv2.imwrite(new_image_folder_path + '/images/' + image_name + '.jpg', image_pre)
+    if os.path.exists(new_image_folder_path + "/labels/" + image_name + ".txt"):
+        os.remove(new_image_folder_path + "/labels/" + image_name + ".txt")
+    for annotation in final_yolo_annotations:
+        class_id, x, y, width, height = annotation
+        line = class_id + ' ' + str(x) + ' ' + str(y) + ' ' + str(width) + ' ' + str(height) + '\n'
+        f = open(new_image_folder_path + "/labels/" + image_name + ".txt", "a")
+        f.write(line)
+        f.close()
+
+def parallel_preprocessing(methods, train_name, folder_name):
+    images_path = './downloads/' + train_name + '/images'
+    images_list = os.listdir(images_path)
+    annotation_path = './downloads/' + train_name + '/labels'
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        futures = []
+
+        for method in methods:
+            for img in images_list:
+                if img == 'dataset.yaml':
+                    continue
+                futures.append(
+                    executor.submit(preprocess_image, method, img, images_path, annotation_path, folder_name))
+
+        concurrent.futures.wait(futures)
+
+    yaml_path = 'preprocessing_folders/' + folder_name + '/'
+    create_yaml(yaml_path, folder_name)
+
 
 
 
@@ -160,17 +213,14 @@ def menu(fun_name,image, annotations,folder_name):
     return image_pre, new_annotations,new_image_folder_path
 
 def create_yaml(yaml_path,folder_name):
-    current_file = __file__
-    current_file = current_file.replace("image_preprocessing.py", yaml_path)
 
-    current_file_path = os.path.abspath(current_file)
 
     data = {
-        'path': current_file_path,
+        'path': "C:\\Users\\bvasi\PycharmProjects\\velos-disease-detection\\preprocessing_folders\\combined_methods",
         'train': './images/',
         'val': './images/',
-        'nc': 4,
-        'names': ["Skoriasi", "Tetranychos", "Prasino Skouliki", "NoComment"]
+        'nc': 5,
+        'names': ["Skoriasi", "Tetranychos", "Prasino Skouliki", "Skoriasi/Tetranychos", "NoComment"]
     }
 
     yaml_path = './preprocessing_folders/' + folder_name + '/'
