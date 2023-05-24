@@ -53,6 +53,10 @@ class Train:
             print(self.responseUAV)
             for image in self.responseUAV:
                 image_path = "./downloads/train/images/" + image['filename']
+                if not os.path.exists(image_path):
+                    self.DownloadUAVImage(image['filename'])
+                if os.path.exists(image_path):
+                    images.append(image_path)
                 print(image['annotation'])
                 im = Image.open(image_path)
                 image_width, image_height = im.size
@@ -74,10 +78,7 @@ class Train:
                         print("Annotation", annotation['id'], "of image", image['filename'], "does not have class")
                         f.write("3 " + " ".join(yolo)+"\n")
                 f.close()
-                if not os.path.exists(image_path):
-                    self.DownloadUAVImage(image['filename'])
-                if os.path.exists(image_path):
-                    images.append(image_path)
+
         else:
             raise Exception("[DownloadUAVImages] Empty response.")
         return images
@@ -92,6 +93,10 @@ class Train:
             print(self.responseUGV)
             for image in self.responseUGV:
                 image_path = "./downloads/train/images/" + image['filename']
+                if not os.path.exists(image_path):
+                    self.DownloadUGVImage(image['filename'])
+                if os.path.exists(image_path):
+                    images.append(image_path)
                 print(image['annotation'])
                 im = Image.open(image_path)
                 image_width, image_height = im.size
@@ -114,10 +119,7 @@ class Train:
                         f.write("3 " + " ".join(yolo)+"\n")
 
                 f.close()
-                if not os.path.exists(image_path):
-                    self.DownloadUGVImage(image['filename'])
-                if os.path.exists(image_path):
-                    images.append(image_path)
+
         else:
             raise Exception("[DownloadUGVImages] Empty response.")
         return images
