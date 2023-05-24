@@ -3,7 +3,7 @@ from pathlib import Path
 from yolov5 import train
 
 def train_yolov5(dataset_path, checkpoint):
-    train.run(imgsz=640, data='preprocessing_folders/'+dataset_path+'/dataset.yaml')
+    train.run(imgsz=640, data='preprocessing_folders/'+dataset_path+'/dataset.yaml', device=0, workers=1)
     return True
 
 # import fiftyone as fo
