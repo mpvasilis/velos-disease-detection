@@ -1,4 +1,4 @@
-path: /content/yolov5
+path: C:\Users\bvasi\PycharmProjects\velos-disease-detection\preprocessing_folders\combined_methods
 train: ./images/
 val: ./images/
 
