@@ -40,13 +40,17 @@ def train():
     checkpoint = request.args.get('checkpoint')
     input_pre = 'train'
     output_pre = 'combined_methods'
+    print("Downloading UAV images....")
     api = Train(API_BASE_URL, JWT)
     api.GetUAVImageDetails()
     result = api.DownloadUAVImages()
     api.GetUGVImageDetails()
+    print("Downloading UGV images....")
     result = api.DownloadUGVImages()
     print(result)
+    print("Preprocessing....")
     parallel_preprocessing(['get_Laplacian','get_crop'],input_pre,output_pre)
+    print("Training model....")
     train_yolov5(output_pre, checkpoint)
     return jsonify("Training started.")
 

@@ -53,17 +53,15 @@ class Train:
                 os.makedirs("./downloads/train/labels/")
             print(self.responseUAV)
 
-            # Create a ThreadPoolExecutor with a maximum of 10 worker threads
             with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
 
-                # Define a helper function for downloading a single image
                 def download_image(image):
                     image_path = "./downloads/train/images/" + image['filename']
                     if not os.path.exists(image_path):
                         self.DownloadUAVImage(image['filename'])
                     if os.path.exists(image_path):
                         images.append(image_path)
-                    print(image['annotation'])
+                    #print(image['annotation'])
                     im = Image.open(image_path)
                     image_width, image_height = im.size
                     f = open("./downloads/train/labels/" + image['filename'][:len(image['filename']) - 3] + "txt", "w")
@@ -78,20 +76,15 @@ class Train:
                                             image_width, image_height)  # <[98 345 420 462] (322x117) | Image: (?x?)>
 
                         if 'comment' in annotation:
-                            print(classes[annotation['comment']], yolo)
+                            #print(classes[annotation['comment']], yolo)
                             f.write(classes[annotation['comment']] + " " + " ".join(yolo) + "\n")
                         else:
-                            print("Annotation", annotation['id'], "of image", image['filename'], "does not have class")
+                           # print("Annotation", annotation['id'], "of image", image['filename'], "does not have class")
                             f.write("3 " + " ".join(yolo) + "\n")
                     f.close()
 
-
-                # Implementation of annotation processing
-
-                # Submit the download_image function for each image to the executor
                 futures = [executor.submit(download_image, image) for image in self.responseUAV]
 
-                # Wait for all the submitted tasks to complete
                 concurrent.futures.wait(futures)
         else:
             raise Exception("[DownloadUAVImages] Empty response.")
@@ -110,7 +103,7 @@ class Train:
                     self.DownloadUGVImage(image['filename'])
                 if os.path.exists(image_path):
                     images.append(image_path)
-                print(image['annotation'])
+                #print(image['annotation'])
                 im = Image.open(image_path)
                 image_width, image_height = im.size
                 f = open("./downloads/train/labels/" + image['filename'][:len(image['filename']) - 3] + "txt", "w")
@@ -125,10 +118,10 @@ class Train:
                                         image_width, image_height)  # <[98 345 420 462] (322x117) | Image: (?x?)>
 
                     if 'comment' in annotation:
-                        print(classes[annotation['comment']], yolo)
+                        #print(classes[annotation['comment']], yolo)
                         f.write(classes[annotation['comment']] + " " + " ".join(yolo)+"\n")
                     else:
-                        print("Annotation", annotation['id'], "of image", image['filename'], "does not have class")
+                        #print("Annotation", annotation['id'], "of image", image['filename'], "does not have class")
                         f.write("3 " + " ".join(yolo)+"\n")
 
                 f.close()
