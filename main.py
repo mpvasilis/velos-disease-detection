@@ -27,12 +27,16 @@ def detectDieasesForMission():
     UAVImages = api.GetUAVImageDetails(mission)
     if len(UAVImages)>0:
         images = api.DownloadUAVImages()
-        disease_detection = DiseaseDetection('ultralytics/yolov5', 'yolov5s',images)
+        disease_detection = DiseaseDetection(images,mission)
         results = disease_detection.detect()
         print(results.xywh)
         return jsonify("Added to queue") #TODO: Queue will be implemeted
     else:
+        # disease_detection = DiseaseDetection(["downloads/train/images/2_10107DJI_0274.JPG"], 1)
+        # results = disease_detection.detect()
+        # print(results.xywh)
         return jsonify("Empty image list")
+
 
 
 @app.route('/train', methods=['GET'])
@@ -53,7 +57,6 @@ def train():
     print("Training model....")
     train_yolov5(output_pre, checkpoint)
     return jsonify("Training started.")
-
 
 
 if __name__ == '__main__':
