@@ -16,7 +16,7 @@ def train_yolov5(dataset_path, checkpoint):
     )
     session = fo.launch_app(dataset)
     autosplit('preprocessing_folders/'+dataset_path+'/images', weights=(0.8, 0.2, 0.0))
-    train.run(imgsz=640, data='preprocessing_folders/'+dataset_path+'/dataset.yaml', device=0, workers=8, batch_size=64)
+    train.run(imgsz=640, data='preprocessing_folders/'+dataset_path+'/dataset.yaml', device=0, workers=1, batch_size=8)
 
     train_dir = "runs/train"
     subfolders = next(os.walk(train_dir))[1]
@@ -24,13 +24,12 @@ def train_yolov5(dataset_path, checkpoint):
 
     line_count = 0
     results_csv = os.path.join(train_dir, last_model, "results.csv")
-    if os.path.exists(results_csv):
-        if os.path.isfile(results_csv):
-            csv_reader = csv.reader(results_csv)
-            for row in csv_reader:
-                line_count += 1
-            if line_count < 20:
-                return False
+    if os.path.isfile(results_csv):
+        csv_reader = csv.reader(results_csv)
+        for row in csv_reader:
+            line_count += 1
+        if line_count < 20:
+            return False
         best_checkpoints = os.path.join(train_dir, last_model, "best.pt")
         if os.path.exists(best_checkpoints):
             destination_path = os.path.join(models_dir, "best.pt")
