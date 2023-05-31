@@ -4,6 +4,8 @@ import shutil
 
 from yolov5 import train
 import fiftyone as fo
+from yolov5.utils.dataloaders import autosplit
+
 models_dir = "models"
 
 def train_yolov5(dataset_path, checkpoint):
@@ -13,7 +15,7 @@ def train_yolov5(dataset_path, checkpoint):
         name="velos-train-dataset",
     )
     session = fo.launch_app(dataset)
-
+    autosplit('preprocessing_folders/'+dataset_path+'/images', weights=(0.8, 0.2, 0.0))
     train.run(imgsz=640, data='preprocessing_folders/'+dataset_path+'/dataset.yaml', device=0, workers=1)
 
     train_dir = "runs/train"

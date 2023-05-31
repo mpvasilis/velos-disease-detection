@@ -217,8 +217,8 @@ def create_yaml(yaml_path,folder_name):
 
     data = {
         'path': "C:\\Users\\bvasi\PycharmProjects\\velos-disease-detection\\preprocessing_folders\\combined_methods",
-        'train': './images/',
-        'val': './images/',
+        'train': './autosplit_train.txt',
+        'val': './autosplit_val.txt',
         'nc': 5,
         'names': ["Skoriasi", "Tetranychos", "Prasino Skouliki", "Skoriasi/Tetranychos", "NoComment"]
     }

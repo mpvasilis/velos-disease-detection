@@ -29,15 +29,14 @@ def detectDieasesForMission():
         images = api.DownloadUAVImages()
         disease_detection = DiseaseDetection(images,mission)
         results = disease_detection.detect()
-        print(results.xywh)
-        disease_count = len(results.xywh)
         return jsonify(results.xywh)
     else:
         disease_detection = DiseaseDetection(["downloads/train/images/2_10107DJI_0274.JPG"], 1)
         results = disease_detection.detect()
         print(results.xywh)
-        disease_count = len(results.xywh)
-        return jsonify("Empty image list")
+        print(type(results.xywh))
+        return jsonify(len(results.xywh))
+        #return jsonify("Empty image list")
 
 
 
