@@ -54,7 +54,7 @@ def train():
     result = api.DownloadUGVImages()
     print(result)
     print("Preprocessing....")
-    parallel_preprocessing(['get_Laplacian','get_crop'],input_pre,output_pre)
+    parallel_preprocessing(['get_crop'],input_pre,output_pre)
     print("Training model....")
     train_yolov5(output_pre, checkpoint)
     return jsonify("Training started.")

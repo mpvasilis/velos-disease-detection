@@ -21,8 +21,8 @@ class TestTrain(TestCase):
 
     def test_evaluate(self):
         name = "velos-train-dataset"
-        dataset_dir = "../downloads/train"
-        dataset_type = fo.types.COCODetectionDataset
+        dataset_dir = "C:\\Users\\bvasi\PycharmProjects\\velos-disease-detection\\preprocessing_folders\\combined_methods"
+        dataset_type = fo.types.YOLOv5Dataset
 
         dataset = fo.Dataset.from_dir(
             dataset_dir=dataset_dir,
@@ -30,4 +30,5 @@ class TestTrain(TestCase):
             name=name,
         )
         session = fo.launch_app(dataset)
+        session.wait()
 

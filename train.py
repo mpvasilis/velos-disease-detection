@@ -16,7 +16,7 @@ def train_yolov5(dataset_path, checkpoint):
     )
     session = fo.launch_app(dataset)
     autosplit('preprocessing_folders/'+dataset_path+'/images', weights=(0.8, 0.2, 0.0))
-    train.run(imgsz=640, data='preprocessing_folders/'+dataset_path+'/dataset.yaml', device=0, workers=1)
+    train.run(imgsz=640, data='preprocessing_folders/'+dataset_path+'/dataset.yaml', device=0, workers=8, batch_size=64)
 
     train_dir = "runs/train"
     subfolders = next(os.walk(train_dir))[1]
