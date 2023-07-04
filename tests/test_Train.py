@@ -21,7 +21,7 @@ class TestTrain(TestCase):
 
     def test_evaluate(self):
         name = "velos-train-dataset"
-        dataset_dir = "C:\\Users\\bvasi\PycharmProjects\\velos-disease-detection\\preprocessing_folders\\combined_methods"
+        dataset_dir = "C:\\Users\\bvasi\PycharmProjects\\velos-disease-detection\\downloads\\train"
         dataset_type = fo.types.YOLOv5Dataset
 
         dataset = fo.Dataset.from_dir(
