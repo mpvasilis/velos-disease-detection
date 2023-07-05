@@ -1,6 +1,7 @@
 import json
 import os
 from flask import Flask, request, jsonify
+import glob
 
 from image_preprocessing.image_preprocessing import parallel_preprocessing
 from train import train_yolov5
@@ -25,18 +26,18 @@ def detectDieasesForMission():
     mission = request.args.get('mission')
     api = API(API_BASE_URL, JWT)
     UAVImages = api.GetUAVImageDetails(mission)
-    # if len(UAVImages)>0:
-    images = api.DownloadUAVImages()
-    disease_detection = DiseaseDetection(images,mission)
-    results = disease_detection.detect()
-    return jsonify(results.xywh)
-    # else:
-    #     disease_detection = DiseaseDetection(["downloads/train/images/2_10107DJI_0274.JPG"], 1)
-    #     results = disease_detection.detect()
-    #     print(results.xywh)
-    #     print(type(results.xywh))
-    #     return jsonify(len(results.xywh))
-    #     #return jsonify("Empty image list")
+    if len(UAVImages)>0:
+        images = api.DownloadUAVImages()
+        disease_detection = DiseaseDetection(images,mission)
+        results = disease_detection.detect()
+        return jsonify(results.xywh)
+    else:
+        disease_detection = DiseaseDetection(glob.glob("downloads/train/images/IMG_*.JPG"), 1)
+        results = disease_detection.detect()
+        print(results.xywh)
+        print(type(results.xywh))
+        return jsonify(len(results.xywh))
+        #return jsonify("Empty image list")
 
 
 
