@@ -79,3 +79,18 @@ class API:
                 response.raw.decode_content = True
                 shutil.copyfileobj(response.raw, f)
         return True
+    
+    def UploadDetectionResults(self, data):
+        url = self.url + "/api/AgrosCropDisease/Create"
+        headers = {
+            'Authorization': 'Bearer ' + self.jwt,
+            'Content-Type': 'application/json'
+        }
+
+        data_json = json.dumps(data)
+        response = requests.post(url, headers=headers, data=data_json)
+
+        if response.status_code == 200:
+            return True
+        else:
+            return False
